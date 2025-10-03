@@ -25,6 +25,19 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow sensor to access your device motion"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "422a1756-deeb-418e-86cf-0ffb561770fc"
+      }
     }
   }
 }

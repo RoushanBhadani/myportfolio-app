@@ -10,6 +10,7 @@ import CustomDrawerContent from "./components/DrawerContent";
 import Academic from "./screens/Academics";
 import ContactUs from "./screens/ContactUs";
 import AboutUs from "./screens/AboutUs";
+import ShakeHandler from "./components/ShakeHandler";
 
 export default function App() {
   const Drawer = createDrawerNavigator();
@@ -18,6 +19,7 @@ export default function App() {
     <>
       <StatusBar style="light" />
       <NavigationContainer>
+        <ShakeHandler/>
         <Drawer.Navigator
           drawerContent={(props) => <CustomDrawerContent {...props} />}
           screenOptions={({ navigation }) => ({

@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLayoutEffect } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
-export default function GradientWrapper({ children }) {
+export default function GradientWrapper({ children, margin }) {
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -21,7 +21,7 @@ export default function GradientWrapper({ children }) {
       style={styles.container}
     >
       <ScrollView
-        style={{ margin: 12 }}
+        style={{ margin: margin }}
         // onScroll={(event) => {
         //   const currentOffset = event.nativeEvent.contentOffset.y;
         //   if (currentOffset > lastOffset) {

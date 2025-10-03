@@ -6,7 +6,7 @@ import SkillsCategory from "./SkillsCategory";
 export default function Home() {
   
   return (
-    <GradientWrapper>
+    <GradientWrapper margin={16}>
       <HomeContent/>
       <SkillsCarousel/>
       <SkillsCategory/>
