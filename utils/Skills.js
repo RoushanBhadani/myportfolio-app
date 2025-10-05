@@ -3,7 +3,7 @@
 export const SKILLS = [
   {
     title: "Frontend",
-    icon: "monitor-dashboard", // I've added an icon property here for easier mapping
+    icon: "monitor-dashboard", 
     skills: [
       { skill: "React.js", percentage: "90%" },
       { skill: "JavaScript", percentage: "75%" },

@@ -7,7 +7,6 @@ function Projects() {
 
   return (
     <Tab.Navigator
-      backBehavior="none"
       screenOptions={{
         tabBarActiveTintColor: "#f57b00",
         tabBarLabelStyle: { fontSize: 14, fontWeight: "600" },
@@ -20,7 +19,6 @@ function Projects() {
       <Tab.Screen
         name="personal"
         component={PersonalProject}
-        backBehavior="none"
         options={{
           title: "Personal",
         }}

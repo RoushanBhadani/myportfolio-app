@@ -1,23 +1,25 @@
 import { useEffect } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+import DownloadResume from "../../components/DownloadResume";
+import ChatWithUs from "../../components/ChatWithUs";
 
 function HomeContent() {
   const spacing = useSharedValue(0);
 
   useEffect(() => {
-    spacing.value = withRepeat(
-      withTiming(10, { duration: 1800 }),
-      -1,
-      true
-    );
-    
+    spacing.value = withRepeat(withTiming(10, { duration: 1800 }), -1, true);
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       letterSpacing: spacing.value,
-      textShadowRadius: spacing.value+30,
+      textShadowRadius: spacing.value + 30,
     };
   });
 
@@ -34,7 +36,9 @@ function HomeContent() {
         Hi I'm
       </Text>
 
-      <Animated.Text style={[styles.name, animatedStyle, { textShadowColor: "#f57b00ff" }]}>
+      <Animated.Text
+        style={[styles.name, animatedStyle, { textShadowColor: "#f57b00ff" }]}
+      >
         ROUSHAN
       </Animated.Text>
 
@@ -75,13 +79,15 @@ function HomeContent() {
         Applications
       </Text>
 
-      <View>
+      <View style={{ marginVertical: 12 }}>
         <Image
           source={require("../../assets/boss.png")}
-          style={{ width: 280, height: 400 }}
+          style={{ width: 280, height: 300 }}
           resizeMode="contain"
         />
       </View>
+
+        <DownloadResume />
     </View>
   );
 }

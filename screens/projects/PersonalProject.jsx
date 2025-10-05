@@ -95,6 +95,7 @@ function PersonalProject() {
                     backgroundColor: item.visitLink ? "#f57b00ff" : "#f0c397ff",
                     // backgroundColor: "#f57b00ff",
                   }}
+                  disabled={item.githubLink ? false : true}
                   onPress={() => Linking.openURL(item.visitLink)}
                 >
                   <Text

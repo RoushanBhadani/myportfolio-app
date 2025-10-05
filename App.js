@@ -11,15 +11,29 @@ import Academic from "./screens/Academics";
 import ContactUs from "./screens/ContactUs";
 import AboutUs from "./screens/AboutUs";
 import ShakeHandler from "./components/ShakeHandler";
+import ChatWithUs from "./components/ChatWithUs";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import AdminChat from "./components/AdminChat";
+const ADMIN_ID = "02ffeb1d-8066-40f1-b6c1-a139f25db665";
 
 export default function App() {
   const Drawer = createDrawerNavigator();
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem("userId");
+      setUserId(id);
+    };
+    fetchUserId();
+  }, []);
 
   return (
     <>
       <StatusBar style="light" />
       <NavigationContainer>
-        <ShakeHandler/>
+        <ShakeHandler />
         <Drawer.Navigator
           drawerContent={(props) => <CustomDrawerContent {...props} />}
           screenOptions={({ navigation }) => ({
@@ -34,12 +48,12 @@ export default function App() {
               />
             ),
             headerLeft: () => (
-              <Pressable onPress={()=>navigation.navigate("home")}>
+              <Pressable onPress={() => navigation.navigate("home")}>
                 <Image
-                source={require("./assets/roushan-logo.png")}
-                style={{ width: 108, marginLeft: 15 }}
-                resizeMode="contain"
-              />
+                  source={require("./assets/roushan-logo.png")}
+                  style={{ width: 108, height: 45, marginLeft: 15 }}
+                  resizeMode="contain"
+                />
               </Pressable>
             ),
             headerStyle: { backgroundColor: "#f57b00ff" },
@@ -48,20 +62,7 @@ export default function App() {
             drawerActiveBackgroundColor: "#f57b00ff",
             drawerActiveTintColor: "#ffffff",
             headerStatusBarHeight: 24,
-            headerTitle: ({ children }) => (
-              <View style={{ width: "100" }}>
-                <Text
-                  style={{
-                    textAlign: "center",
-                    fontSize: 18,
-                    fontWeight: 500,
-                    color: "#ffffff",
-                  }}
-                >
-                  {children}
-                </Text>
-              </View>
-            ),
+            headerTitle: "",
           })}
         >
           <Drawer.Screen
@@ -126,6 +127,8 @@ export default function App() {
           />
         </Drawer.Navigator>
       </NavigationContainer>
+
+      {userId === ADMIN_ID ? <AdminChat /> : <ChatWithUs />}
     </>
   );
 }

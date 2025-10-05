@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 export const DATA = [
   { id: "1", image: require("../assets/reactnative.png") },
   { id: "2", image: require("../assets/js-file.png") },
@@ -8,7 +10,6 @@ export const DATA = [
   { id: "7", image: require("../assets/typescript.png") },
   { id: "8", image: require("../assets/html.png") },
 ];
-
 
 export const WORK_EXPERIENCE = [
   {
@@ -39,7 +40,6 @@ export const WORK_EXPERIENCE = [
   },
 ];
 
-
 export const personalProjectData = [
   {
     id: 1,
@@ -49,7 +49,7 @@ export const personalProjectData = [
     company: false,
     level: "Advanced",
     currentlyWorking: true,
-    githubLink:"",
+    githubLink: "",
     visitLink: "",
     description:
       "A full-stack API Market Place for students to buy and practice APIs with guided docs. Built with React, Redux Toolkit, PrimeReact, and Node.js, handling both frontend and backend with auth, API access, and purchase tracking.",
@@ -63,7 +63,7 @@ export const personalProjectData = [
     company: true,
     level: "Intermediate",
     currentlyWorking: false,
-    githubLink:"https://github.com/RoushanBhadani/dine-in-react-native-app",
+    githubLink: "https://github.com/RoushanBhadani/dine-in-react-native-app",
     visitLink: "",
     description:
       "Dine In is a restaurant table booking app that lets users reserve tables at multiple restaurants in advance. Users can select a restaurant, specify the number of guests, and enter their name and mobile number to book a table quickly and easily. The app streamlines the reservation process, ensuring a smooth dining experience for groups of any size.",
@@ -77,7 +77,7 @@ export const personalProjectData = [
     company: true,
     level: "Intermediate",
     currentlyWorking: true,
-    githubLink:"",
+    githubLink: "",
     visitLink: "",
     description:
       "A full-stack API Market Place for students to buy and practice APIs with guided docs. Built with React, Redux Toolkit, PrimeReact, and Node.js, handling both frontend and backend with auth, API access, and purchase tracking.",
@@ -91,8 +91,9 @@ export const personalProjectData = [
     company: false,
     level: "Intermediate",
     currentlyWorking: false,
-    githubLink: "https://github.com/RoushanBhadani/react-native-tailwind-rtk-query-setup",
-    visitLink:"",
+    githubLink:
+      "https://github.com/RoushanBhadani/react-native-tailwind-rtk-query-setup",
+    visitLink: "",
     description:
       "This app is created using React Native with Expo CLI. It uses Redux Toolkit, Formik for validation, and Tailwind Nativewind for styling. Users can sign up, log in, and access their profile via protected routes. Non-authenticated users cannot access protected routes.",
   },
@@ -104,7 +105,7 @@ export const personalProjectData = [
     company: false,
     level: "Intermediate",
     currentlyWorking: false,
-    githubLink:"https://github.com/RoushanBhadani/replicaweaponstore",
+    githubLink: "https://github.com/RoushanBhadani/replicaweaponstore",
     visitLink: "https://replicaweaponstore.vercel.app/",
     description:
       "Developed an e-commerce store for replica weapons with product catalog, cart, and checkout flow. Integrated Node.js APIs and managed state using Redux.",
@@ -117,7 +118,7 @@ export const personalProjectData = [
     company: false,
     level: "Basic",
     currentlyWorking: false,
-    githubLink:"https://github.com/RoushanBhadani/movieland",
+    githubLink: "https://github.com/RoushanBhadani/movieland",
     visitLink: "https://movieland-six-omega.vercel.app/",
     description:
       "Built a movie search application using the OMDb API. Integrated API calls for fetching movie data and implemented dynamic search with responsive design.",
@@ -130,13 +131,12 @@ export const personalProjectData = [
     company: false,
     level: "Basic",
     currentlyWorking: false,
-    githubLink:"https://github.com/RoushanBhadani/TicTacToeGame",
+    githubLink: "https://github.com/RoushanBhadani/TicTacToeGame",
     visitLink: "https://tic-tac-toe-game-nine-gray.vercel.app/",
     description:
       "Created an interactive Tic Tac Toe game with win detection and game reset functionality. Designed a clean, responsive interface in React.",
   },
 ];
-
 
 export const companyProjectData = [
   {
@@ -175,4 +175,63 @@ export const companyProjectData = [
     description:
       "Created a mobile student portal for course access, mentor interaction, and exams. Integrated APIs for real-time data syncing, managed state with Recoil, and styled with React Native Paper.",
   },
+];
+
+export const academic = [
+  {
+    grade: "8.14 %",
+    degree: "Bachelor's of Engineering CSE",
+    batch: "2020-2024",
+    school: "Dr. RJY Inter College",
+    address: "Gaya, Bihar",
+  },
+
+  {
+    grade: "75.2 %",
+    degree: "Matriculation",
+    batch: "2018-2020",
+    school: "Dr. RJY Inter College",
+    address: "Gaya, Bihar",
+  },
+
+  {
+    grade: "8.2 CGPA",
+    degree: "Intermediate",
+    batch: "2016-2017",
+    school: "Pratibha Punj Public School",
+    address: "Jehanabad, Bihar",
+  },
+];
+
+
+export const achievements = [
+  {
+    title: "Software Testing",
+    platform: "IIT Bangalore (NPTEL)",
+  },
+  {
+    title: "Java full stack development with React",
+    platform: "DUCAT Training Institute"
+  },
+  {
+    title: "Java 8 and Spring MVC",
+    platform: "Infosys Springboard",
+  },
+  {
+    title: "Data Structure in C++",
+    platform: "Coding Ninjas"
+  },
+  {
+    title: "Responsive RealWorld Website with HTML, CSS and JS",
+    platform: "Udemy",
+  },
+  {
+    title: "Java and SQL Certifications",
+    platform: "Hackerrank",
+  },
+  {
+    title: "React Training",
+    platform: "Internshala"
+  }
+  
 ];
