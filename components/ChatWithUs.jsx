@@ -1,6 +1,4 @@
-
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Pressable,
@@ -11,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { db } from "./firebase";
+import { db } from "./firebase"; 
 import {
   collection,
   addDoc,
@@ -19,21 +17,71 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import uuid from "react-native-uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const ADMIN_ID = "02ffeb1d-8066-40f1-b6c1-a139f25db665";
-
 
 function ChatWithUs() {
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const scrollViewRef = useRef();
 
+  useEffect(() => {
+    const getOrCreateUserId = async () => {
+      let id = await AsyncStorage.getItem("userId");
+      if (!id) {
+        id = uuid.v4();
+        await AsyncStorage.setItem("userId", id);
+      }
+      setUserId(id);
+    };
+    getOrCreateUserId();
+  }, []);
 
+  useEffect(() => {
+    if (!userId) return;
 
+    const messagesCollection = collection(db, "chats", userId, "messages");
+    const q = query(messagesCollection, orderBy("createdAt", "asc"));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const messages = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setChatHistory(messages);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  const handleSendMessage = async () => {
+    if (message.trim() === "" || !userId) return;
+
+    const messageData = {
+      text: message,
+      createdAt: serverTimestamp(),
+      senderId: userId,
+    };
+
+    await addDoc(collection(db, "chats", userId, "messages"), messageData);
+
+    await setDoc(
+      doc(db, "chats", userId),
+      {
+        lastMessage: message,
+        timestamp: serverTimestamp(),
+        userId: userId,
+      },
+      { merge: true }
+    );
+
+    setMessage("");
+  };
 
   return (
     <>
@@ -58,15 +106,17 @@ function ChatWithUs() {
             </View>
 
             <ScrollView
+              ref={scrollViewRef}
               style={styles.chatBody}
               showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
             >
-              {chatHistory.map((msg, index) => (
+              {chatHistory.map((msg) => (
                 <View
-                  key={index}
+                  key={msg.id}
                   style={[
                     styles.messageBubble,
-                    msg.from === "user" ? styles.userMsg : styles.botMsg,
+                    msg.senderId === userId ? styles.userMsg : styles.botMsg,
                   ]}
                 >
                   <Text style={styles.messageText}>{msg.text}</Text>
@@ -82,7 +132,7 @@ function ChatWithUs() {
                 value={message}
                 onChangeText={setMessage}
               />
-              <Pressable onPress={()=>console.log("Send")}>
+              <Pressable onPress={handleSendMessage}>
                 <Ionicons name="send" size={26} color="#f57b00ff" />
               </Pressable>
             </View>
