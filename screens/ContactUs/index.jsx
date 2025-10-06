@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   Platform,
   Alert,
@@ -17,15 +16,42 @@ import {
   validationSchema,
 } from "../../components/formValidationSchema";
 import InputText from "../../components/InputText";
+import axios from "axios";
+const API_URL = "https://portfolio-api-tau-liard.vercel.app/api/users";
 
 function ContactUs() {
   const formik = useFormik({
     initialValues,
     validationSchema,
-    onSubmit: (values, { resetForm }) => {
-      console.log("Form data:", values);
-      Alert.alert("Success", "Form submitted successfully!");
-      resetForm();
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        const payload = {
+          firstname: values.firstName,
+          lastname: values.lastName,
+          email: values.email,
+          mobile: values.phone,
+          description: values.message,
+        };
+
+        const response = await axios.post(API_URL, payload);
+        Alert.alert("Success", "Your message has been sent successfully!");
+        resetForm();
+      } catch (error) {
+
+        let errorMessage = "Failed to send message. Please try again later.";
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          errorMessage = error.response.data.message;
+        } else if (error.request) {
+          errorMessage =
+            "Network error. Please check your internet connection.";
+        }
+
+        Alert.alert("Error", errorMessage);
+      }
     },
   });
 
@@ -101,7 +127,14 @@ function ContactUs() {
               textAlignVertical="top"
             />
 
-            <Pressable style={styles.button} onPress={formik.handleSubmit}>
+            <Pressable
+              style={[
+                styles.button,
+                formik.isSubmitting && styles.buttonDisabled,
+              ]}
+              onPress={formik.handleSubmit}
+              disabled={formik.isSubmitting}
+            >
               <Text style={styles.buttonText}>Submit</Text>
             </Pressable>
           </View>
@@ -141,6 +174,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     elevation: 5,
     marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#8c4600",
+    borderColor: "#8c4600",
   },
   buttonText: {
     color: "#ffffff",

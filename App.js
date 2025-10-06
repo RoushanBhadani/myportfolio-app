@@ -1,6 +1,6 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { StatusBar } from "expo-status-bar";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable} from "react-native";
 import Home from "./screens/home";
 import { NavigationContainer } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -10,11 +10,11 @@ import CustomDrawerContent from "./components/DrawerContent";
 import Academic from "./screens/Academics";
 import ContactUs from "./screens/ContactUs";
 import AboutUs from "./screens/AboutUs";
-import ShakeHandler from "./components/ShakeHandler";
 import ChatWithUs from "./components/ChatWithUs";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AdminChat from "./components/AdminChat";
+import AdminMode from "./components/AdminMode";
 const ADMIN_ID = "02ffeb1d-8066-40f1-b6c1-a139f25db665";
 
 export default function App() {
@@ -32,8 +32,9 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" />
+      <AdminMode/>
       <NavigationContainer>
-        <ShakeHandler />
+        
         <Drawer.Navigator
           drawerContent={(props) => <CustomDrawerContent {...props} />}
           screenOptions={({ navigation }) => ({

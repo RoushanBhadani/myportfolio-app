@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { db } from "./firebase"; 
+import { db } from "./firebase";
 import {
   collection,
   addDoc,
@@ -97,46 +99,53 @@ function ChatWithUs() {
 
       <Modal visible={visible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.chatBox}>
-            <View style={styles.chatHeader}>
-              <Text style={styles.headerText}>Chat With Us 💬</Text>
-              <Pressable onPress={() => setVisible(false)}>
-                <Ionicons name="close" size={22} color="#fff" />
-              </Pressable>
-            </View>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <View style={styles.chatBox}>
+              <View style={styles.chatHeader}>
+                <Text style={styles.headerText}>Chat With Us 💬</Text>
+                <Pressable onPress={() => setVisible(false)}>
+                  <Ionicons name="close" size={22} color="#fff" />
+                </Pressable>
+              </View>
 
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.chatBody}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-            >
-              {chatHistory.map((msg) => (
-                <View
-                  key={msg.id}
-                  style={[
-                    styles.messageBubble,
-                    msg.senderId === userId ? styles.userMsg : styles.botMsg,
-                  ]}
-                >
-                  <Text style={styles.messageText}>{msg.text}</Text>
-                </View>
-              ))}
-            </ScrollView>
+              <ScrollView
+                ref={scrollViewRef}
+                style={styles.chatBody}
+                showsVerticalScrollIndicator={false}
+                onContentSizeChange={() =>
+                  scrollViewRef.current.scrollToEnd({ animated: true })
+                }
+              >
+                {chatHistory.map((msg) => (
+                  <View
+                    key={msg.id}
+                    style={[
+                      styles.messageBubble,
+                      msg.senderId === userId ? styles.userMsg : styles.botMsg,
+                    ]}
+                  >
+                    <Text style={styles.messageText}>{msg.text}</Text>
+                  </View>
+                ))}
+              </ScrollView>
 
-            <View style={styles.chatFooter}>
-              <TextInput
-                style={styles.input}
-                placeholder="Type a message..."
-                placeholderTextColor="#ccc"
-                value={message}
-                onChangeText={setMessage}
-              />
-              <Pressable onPress={handleSendMessage}>
-                <Ionicons name="send" size={26} color="#f57b00ff" />
-              </Pressable>
+              <View style={styles.chatFooter}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Type a message..."
+                  placeholderTextColor="#ccc"
+                  value={message}
+                  onChangeText={setMessage}
+                />
+                <Pressable onPress={handleSendMessage}>
+                  <Ionicons name="send" size={26} color="#f57b00ff" />
+                </Pressable>
+              </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </>
@@ -163,7 +172,7 @@ const styles = StyleSheet.create({
   },
   chatBox: {
     backgroundColor: "#121212",
-    height: "100%",
+    height: "90%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 15,

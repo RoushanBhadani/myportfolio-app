@@ -7,6 +7,8 @@ import {
   Pressable,
   TextInput,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { db } from "./firebase";
@@ -30,7 +32,6 @@ function AdminChatModal() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const scrollViewRef = useRef();
-
 
   useEffect(() => {
     const chatsCollection = collection(db, "chats");
@@ -114,75 +115,98 @@ function AdminChatModal() {
 
       <Modal visible={visible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <View style={styles.header}>
-              {selectedUser ? (
-                <View style={{ flexDirection: "row", alignItems: 'center', gap: 15 }}>
-                  <Pressable onPress={goBackToUserList}>
-                    <Ionicons name="arrow-back" size={22} color="#fff" />
-                  </Pressable>
-                  <Text style={styles.headerText} numberOfLines={1}>
-                    {`Chat with ${selectedUser.id.substring(0, 8)}... 💬`}
-                  </Text>
-                </View>
-              ) : (
-                <Text style={styles.headerText}>User List 💬</Text>
-              )}
-               <Pressable onPress={() => { setVisible(false); setSelectedUser(null); }}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            
+          >
+            <View style={styles.modalBox}>
+              <View style={styles.header}>
+                {selectedUser ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 15,
+                    }}
+                  >
+                    <Pressable onPress={goBackToUserList}>
+                      <Ionicons name="arrow-back" size={22} color="#fff" />
+                    </Pressable>
+                    <Text style={styles.headerText} numberOfLines={1}>
+                      {`Chat with ${selectedUser.id.substring(0, 8)}... 💬`}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.headerText}>User List 💬</Text>
+                )}
+                <Pressable
+                  onPress={() => {
+                    setVisible(false);
+                    setSelectedUser(null);
+                  }}
+                >
                   <Ionicons name="close" size={22} color="#fff" />
                 </Pressable>
-            </View>
+              </View>
 
-            {!selectedUser ? (
-              <ScrollView>
-                {users.map((user) => (
-                  <Pressable
-                    key={user.id}
-                    style={styles.userItem}
-                    onPress={() => setSelectedUser(user)}
-                  >
-                    <Text style={styles.userText}>User ID: {user.id.substring(0, 8)}...</Text>
-                    <Text style={styles.lastMessage} numberOfLines={1}>Last: {user.lastMessage}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            ) : (
-              <>
-                <ScrollView
-                  ref={scrollViewRef}
-                  style={styles.messages}
-                  onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-                >
-                  {messages.map((msg) => (
-                    <View
-                      key={msg.id}
-                      style={[
-                        styles.messageBubble,
-                        msg.senderId === ADMIN_ID
-                          ? styles.adminMsg
-                          : styles.userMsg,
-                      ]}
+              {!selectedUser ? (
+                <ScrollView>
+                  {users.map((user) => (
+                    <Pressable
+                      key={user.id}
+                      style={styles.userItem}
+                      onPress={() => setSelectedUser(user)}
                     >
-                      <Text style={styles.messageText}>{msg.text}</Text>
-                    </View>
+                      <Text style={styles.userText}>
+                        User ID: {user.id.substring(0, 8)}...
+                      </Text>
+                      <Text style={styles.lastMessage} numberOfLines={1}>
+                        Last: {user.lastMessage}
+                      </Text>
+                    </Pressable>
                   ))}
                 </ScrollView>
+              ) : (
+                <>
+                  <ScrollView
+                    ref={scrollViewRef}
+                    style={styles.messages}
+                    onContentSizeChange={() =>
+                      scrollViewRef.current.scrollToEnd({ animated: true })
+                    }
+                  >
+                    {messages.map((msg) => (
+                      <View
+                        key={msg.id}
+                        style={[
+                          styles.messageBubble,
+                          msg.senderId === ADMIN_ID
+                            ? styles.adminMsg
+                            : styles.userMsg,
+                        ]}
+                      >
+                        <Text style={styles.messageText}>{msg.text}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
 
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Type a reply..."
-                    placeholderTextColor="#999"
-                    value={newMessage}
-                    onChangeText={setNewMessage}
-                  />
-                  <Pressable onPress={handleSendMessage}>
-                    <Ionicons name="send" size={26} color="#f57b00ff" />
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Type a reply..."
+                      placeholderTextColor="#999"
+                      value={newMessage}
+                      onChangeText={setNewMessage}
+                    />
+                    <Pressable onPress={handleSendMessage}>
+                      <Ionicons name="send" size={26} color="#f57b00ff" />
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </>
@@ -198,7 +222,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 50,
     elevation: 5,
-    zIndex: 999
+    zIndex: 999,
   },
   modalOverlay: {
     flex: 1,
@@ -215,11 +239,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
-    paddingHorizontal: 5
+    paddingHorizontal: 5,
   },
-  headerText: { color: "#f57b00ff", fontSize: 18, fontWeight: "bold", flexShrink: 1 },
+  headerText: {
+    color: "#f57b00ff",
+    fontSize: 18,
+    fontWeight: "bold",
+    flexShrink: 1,
+  },
   userItem: {
     backgroundColor: "#333",
     padding: 12,
@@ -228,7 +257,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: "#f57b00ff",
   },
-  userText: { color: "#fff", fontSize: 14, fontWeight: 'bold' },
+  userText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
   lastMessage: { color: "#ccc", fontSize: 12, marginTop: 4 },
   messages: { flex: 1, marginBottom: 10 },
   messageBubble: {
@@ -242,6 +271,7 @@ const styles = StyleSheet.create({
   messageText: { color: "#fff" },
   inputContainer: { flexDirection: "row", alignItems: "center" },
   input: {
+    
     flex: 1,
     borderWidth: 1,
     borderColor: "#f57b00ff",
@@ -249,9 +279,8 @@ const styles = StyleSheet.create({
     padding: 8,
     color: "#fff",
     marginRight: 8,
-    height: 40
+    height: 40,
   },
 });
-
 
 export default AdminChatModal;
