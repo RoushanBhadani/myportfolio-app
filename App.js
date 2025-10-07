@@ -32,7 +32,7 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" />
-      <AdminMode/>
+      {userId !== ADMIN_ID && (<AdminMode/>)}
       <NavigationContainer>
         
         <Drawer.Navigator
@@ -42,7 +42,7 @@ export default function App() {
             headerRight: () => (
               <Ionicons
                 name="person-circle-outline"
-                size={32}
+                size={40}
                 color="white"
                 style={{ marginRight: 15 }}
                 onPress={() => navigation.toggleDrawer()}
@@ -62,7 +62,7 @@ export default function App() {
             drawerInactiveTintColor: "#ffffff",
             drawerActiveBackgroundColor: "#f57b00ff",
             drawerActiveTintColor: "#ffffff",
-            headerStatusBarHeight: 24,
+            // headerStatusBarHeight: 24,
             headerTitle: "",
           })}
         >

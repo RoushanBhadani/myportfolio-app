@@ -9,8 +9,10 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Entypo } from "@expo/vector-icons";
 import { db } from "./firebase";
 import {
   collection,
@@ -22,8 +24,42 @@ import {
   doc,
   setDoc,
 } from "firebase/firestore";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import ImagePicker from "./ImagePicker";
 
 const ADMIN_ID = "02ffeb1d-8066-40f1-b6c1-a139f25db665";
+
+const uploadImageToCloudinary = async (imageUri) => {
+  const CLOUD_NAME = "dgkitslcv";
+  const UPLOAD_PRESET = "myportfolio-chats-image";
+
+  const formData = new FormData();
+  formData.append("file", {
+    uri: imageUri,
+    type: `image/${imageUri.split(".").pop()}`,
+    name: `upload.${imageUri.split(".").pop()}`,
+  });
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    if (!response.ok) throw new Error("Upload failed");
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Error uploading image to Cloudinary:", error);
+    return null;
+  }
+};
 
 function AdminChatModal() {
   const [visible, setVisible] = useState(false);
@@ -31,6 +67,8 @@ function AdminChatModal() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [imageUrl, setImageUrl] = useState();
+  const [isUploading, setIsUploading] = useState(false);
   const scrollViewRef = useRef();
 
   useEffect(() => {
@@ -74,34 +112,78 @@ function AdminChatModal() {
   }, [selectedUser]);
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() === "" || !selectedUser) return;
+    if ((!imageUrl && newMessage.trim() === "") || !selectedUser) {
+      return;
+    }
 
-    const messageData = {
-      text: newMessage,
-      createdAt: serverTimestamp(),
-      senderId: ADMIN_ID,
-    };
+    setIsUploading(true);
+    let uploadedImageUrl = null;
 
-    await addDoc(
-      collection(db, "chats", selectedUser.id, "messages"),
-      messageData
-    );
+    try {
+      if (imageUrl) {
+        uploadedImageUrl = await uploadImageToCloudinary(imageUrl);
+        if (!uploadedImageUrl) {
+          alert("Image upload failed. Please try again.");
+          setIsUploading(false);
+          return;
+        }
+      }
 
-    await setDoc(
-      doc(db, "chats", selectedUser.id),
-      {
-        lastMessage: newMessage,
-        timestamp: serverTimestamp(),
-      },
-      { merge: true }
-    );
+      const messageData = {
+        createdAt: serverTimestamp(),
+        senderId: ADMIN_ID,
+      };
 
-    setNewMessage("");
+      if (newMessage.trim() !== "") {
+        messageData.text = newMessage;
+      }
+
+      if (uploadedImageUrl) {
+        messageData.imageUrl = uploadedImageUrl;
+      }
+
+      await addDoc(
+        collection(db, "chats", selectedUser.id, "messages"),
+        messageData
+      );
+
+      const lastMessageText = newMessage.trim() ? newMessage : "📷 Image";
+      await setDoc(
+        doc(db, "chats", selectedUser.id),
+        {
+          lastMessage: `Admin: ${lastMessageText}`, 
+          timestamp: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      setNewMessage("");
+      setImageUrl(null);
+    } catch (error) {
+      console.error("Error sending message from admin:", error);
+      alert("Failed to send message.");
+    } finally {
+      setIsUploading(false); 
+    }
   };
-
   const goBackToUserList = () => {
     setSelectedUser(null);
   };
+
+  const cameraImageHandler = (uri) => {
+    setImageUrl(uri);
+  };
+
+  let imagePreview = null;
+  if (imageUrl) {
+    imagePreview = (
+      <Image
+        style={styles.image}
+        source={{ uri: imageUrl }}
+        resizeMode="contain"
+      />
+    );
+  }
 
   return (
     <>
@@ -118,94 +200,138 @@ function AdminChatModal() {
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            
+            // keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
           >
-            <View style={styles.modalBox}>
-              <View style={styles.header}>
-                {selectedUser ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 15,
+            <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+              <LinearGradient
+                colors={["rgba(7,7,9,1)", "rgba(27,24,113,1)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.modalBox}
+              >
+                <View style={styles.header}>
+                  {selectedUser ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 15,
+                      }}
+                    >
+                      <Pressable onPress={goBackToUserList}>
+                        <Ionicons name="arrow-back" size={22} color="#fff" />
+                      </Pressable>
+                      <Text style={styles.headerText} numberOfLines={1}>
+                        {`Chat with ${selectedUser.id.substring(0, 8)}... 💬`}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.headerText}>User List 💬</Text>
+                  )}
+                  <Pressable
+                    onPress={() => {
+                      setVisible(false);
+                      setSelectedUser(null);
                     }}
                   >
-                    <Pressable onPress={goBackToUserList}>
-                      <Ionicons name="arrow-back" size={22} color="#fff" />
-                    </Pressable>
-                    <Text style={styles.headerText} numberOfLines={1}>
-                      {`Chat with ${selectedUser.id.substring(0, 8)}... 💬`}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.headerText}>User List 💬</Text>
-                )}
-                <Pressable
-                  onPress={() => {
-                    setVisible(false);
-                    setSelectedUser(null);
-                  }}
-                >
-                  <Ionicons name="close" size={22} color="#fff" />
-                </Pressable>
-              </View>
+                    <Ionicons name="close" size={22} color="#fff" />
+                  </Pressable>
+                </View>
 
-              {!selectedUser ? (
-                <ScrollView>
-                  {users.map((user) => (
-                    <Pressable
-                      key={user.id}
-                      style={styles.userItem}
-                      onPress={() => setSelectedUser(user)}
-                    >
-                      <Text style={styles.userText}>
-                        User ID: {user.id.substring(0, 8)}...
-                      </Text>
-                      <Text style={styles.lastMessage} numberOfLines={1}>
-                        Last: {user.lastMessage}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              ) : (
-                <>
-                  <ScrollView
-                    ref={scrollViewRef}
-                    style={styles.messages}
-                    onContentSizeChange={() =>
-                      scrollViewRef.current.scrollToEnd({ animated: true })
-                    }
-                  >
-                    {messages.map((msg) => (
-                      <View
-                        key={msg.id}
-                        style={[
-                          styles.messageBubble,
-                          msg.senderId === ADMIN_ID
-                            ? styles.adminMsg
-                            : styles.userMsg,
-                        ]}
+                {!selectedUser ? (
+                  <ScrollView>
+                    {users.map((user) => (
+                      <Pressable
+                        key={user.id}
+                        style={styles.userItem}
+                        onPress={() => setSelectedUser(user)}
                       >
-                        <Text style={styles.messageText}>{msg.text}</Text>
-                      </View>
+                        <Text style={styles.userText}>
+                          User ID: {user.id.substring(0, 8)}...
+                        </Text>
+                        <Text style={styles.lastMessage} numberOfLines={1}>
+                          Last: {user.lastMessage}
+                        </Text>
+                      </Pressable>
                     ))}
                   </ScrollView>
+                ) : (
+                  <>
+                    <ScrollView
+                      ref={scrollViewRef}
+                      style={styles.messages}
+                      onContentSizeChange={() =>
+                        scrollViewRef.current.scrollToEnd({ animated: true })
+                      }
+                    >
+                      {messages.map((msg) => (
+                        <View
+                          key={msg.id}
+                          style={[
+                            styles.messageBubble,
+                            msg.senderId === ADMIN_ID
+                              ? styles.adminMsg
+                              : styles.userMsg,
+                          ]}
+                        >
+                          {msg.imageUrl && (
+                            <Image
+                              source={{ uri: msg.imageUrl }}
+                              style={styles.chatImage}
+                              resizeMode="cover"
+                            />
+                          )}
+                          {msg.text && (
+                            <Text style={styles.messageText}>{msg.text}</Text>
+                          )}
+                        </View>
+                      ))}
+                    </ScrollView>
 
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Type a reply..."
-                      placeholderTextColor="#999"
-                      value={newMessage}
-                      onChangeText={setNewMessage}
-                    />
-                    <Pressable onPress={handleSendMessage}>
-                      <Ionicons name="send" size={26} color="#f57b00ff" />
-                    </Pressable>
-                  </View>
-                </>
-              )}
-            </View>
+                    <View style={styles.chatFooter}>
+                      {imageUrl && (
+                        <View style={styles.previewContainer}>
+                          <View style={styles.imagePreview}>
+                            {imagePreview}
+                          </View>
+                          <Pressable
+                            style={styles.closeButton}
+                            onPress={() => setImageUrl(null)}
+                          >
+                            <Entypo name="cross" size={24} color="#f57b00ff" />
+                          </Pressable>
+                        </View>
+                      )}
+                      <View style={styles.inputContainer}>
+                        <ImagePicker cameraImage={cameraImageHandler} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Type a reply..."
+                          placeholderTextColor="#999"
+                          value={newMessage}
+                          onChangeText={setNewMessage}
+                        />
+                        <Pressable onPress={handleSendMessage}>
+                          {isUploading ? (
+                            <ActivityIndicator
+                              size="small"
+                              color="#888"
+                              style={{ marginRight: 5 }}
+                            />
+                          ) : (
+                            <Ionicons
+                              name="send"
+                              size={26}
+                              color={"#f57b00ff"}
+                            />
+                          )}
+                        </Pressable>
+                      </View>
+                    </View>
+                  </>
+                )}
+              </LinearGradient>
+            </SafeAreaView>
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -217,7 +343,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 30,
+    bottom: 45,
     backgroundColor: "rgba(255,255,255,0.6)",
     padding: 10,
     borderRadius: 50,
@@ -226,14 +352,9 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
   },
   modalBox: {
-    height: "100%",
-    backgroundColor: "#121212",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    flex: 1,
     padding: 10,
   },
   header: {
@@ -242,6 +363,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
     paddingHorizontal: 5,
+    paddingTop: 10,
   },
   headerText: {
     color: "#f57b00ff",
@@ -250,7 +372,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   userItem: {
-    backgroundColor: "#333",
+    backgroundColor: "#f57b00ff",
     padding: 12,
     borderRadius: 5,
     marginVertical: 8,
@@ -258,7 +380,12 @@ const styles = StyleSheet.create({
     borderColor: "#f57b00ff",
   },
   userText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
-  lastMessage: { color: "#ccc", fontSize: 12, marginTop: 4 },
+  lastMessage: {
+    color: "#000000ff",
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: 600,
+  },
   messages: { flex: 1, marginBottom: 10 },
   messageBubble: {
     padding: 8,
@@ -266,12 +393,23 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     maxWidth: "80%",
   },
-  userMsg: { backgroundColor: "#2c2c2c", alignSelf: "flex-start" },
+  userMsg: {
+    backgroundColor: "#2c2c2c",
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#f57b00ff",
+  },
   adminMsg: { backgroundColor: "#f57b00ff", alignSelf: "flex-end" },
   messageText: { color: "#fff" },
-  inputContainer: { flexDirection: "row", alignItems: "center" },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopColor: "#333",
+    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
   input: {
-    
     flex: 1,
     borderWidth: 1,
     borderColor: "#f57b00ff",
@@ -280,6 +418,36 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginRight: 8,
     height: 40,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 4,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#2c2c2c",
+    borderRadius: 4,
+  },
+  previewContainer: {
+    marginBottom: 10,
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(27,24,113,0.5)",
+    borderRadius: 15,
+    padding: 3,
+    zIndex: 1,
+  },
+  chatImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 5,
   },
 });
 

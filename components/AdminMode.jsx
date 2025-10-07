@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { Accelerometer } from "expo-sensors";
-import { Alert, Modal, View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+  Alert,
+  Modal,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SHAKE_THRESHOLD = 1.5;
@@ -14,7 +22,10 @@ const AdminMode = () => {
   const handleAdminSubmit = async () => {
     if (inputText === ADMIN_SECRET_CODE) {
       await AsyncStorage.setItem("userId", ADMIN_ID);
-      Alert.alert("Success", "Admin mode enabled! Please restart the app for changes to take effect.");
+      Alert.alert(
+        "Success",
+        "Admin mode enabled! Please restart the app for changes to take effect."
+      );
     } else {
       Alert.alert("Error", "Incorrect code.");
     }
@@ -47,7 +58,9 @@ const AdminMode = () => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Admin Access</Text>
-          <Text style={styles.modalSubtitle}>Enter the secret code to enable admin mode.</Text>
+          <Text style={styles.modalSubtitle}>
+            Enter the secret code to enable admin mode.
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="Secret Code"
@@ -57,10 +70,19 @@ const AdminMode = () => {
             secureTextEntry={true}
           />
           <View style={styles.buttonContainer}>
-            <Pressable style={styles.button} onPress={() => {setInputText(""); setModalVisible(false)}}>
+            <Pressable
+              style={styles.button}
+              onPress={() => {
+                setInputText("");
+                setModalVisible(false);
+              }}
+            >
               <Text style={styles.buttonText}>Cancel</Text>
             </Pressable>
-            <Pressable style={[styles.button, styles.submitButton]} onPress={handleAdminSubmit}>
+            <Pressable
+              style={[styles.button, styles.submitButton]}
+              onPress={handleAdminSubmit}
+            >
               <Text style={styles.buttonText}>Submit</Text>
             </Pressable>
           </View>
@@ -73,57 +95,57 @@ const AdminMode = () => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    width: '80%',
-    backgroundColor: '#333',
+    width: "80%",
+    backgroundColor: "#333",
     borderRadius: 10,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#ccc',
+    color: "#ccc",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
-    width: '100%',
+    width: "100%",
     borderWidth: 1,
-    borderColor: '#f57b00ff',
+    borderColor: "#f57b00ff",
     borderRadius: 5,
     padding: 10,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 20,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
   button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    backgroundColor: '#555',
+    backgroundColor: "#555",
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 5,
   },
   submitButton: {
-    backgroundColor: '#f57b00ff',
+    backgroundColor: "#f57b00ff",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
   },
 });

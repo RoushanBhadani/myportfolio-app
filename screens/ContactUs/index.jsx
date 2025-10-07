@@ -60,7 +60,7 @@ function ContactUs() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 25 : 0}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}

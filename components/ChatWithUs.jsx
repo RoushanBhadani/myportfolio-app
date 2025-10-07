@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -9,8 +10,10 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Entypo from "@expo/vector-icons/Entypo";
 import { db } from "./firebase";
 import {
   collection,
@@ -24,12 +27,49 @@ import {
 } from "firebase/firestore";
 import uuid from "react-native-uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import ImagePicker from "./ImagePicker";
+
+const uploadImageToCloudinary = async (imageUri) => {
+  const CLOUD_NAME = "dgkitslcv";
+  const UPLOAD_PRESET = "myportfolio-chats-image";
+
+  const formData = new FormData();
+  formData.append("file", {
+    uri: imageUri,
+    type: `image/${imageUri.split(".").pop()}`,
+    name: `upload.${imageUri.split(".").pop()}`,
+  });
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    if (!response.ok) throw new Error("Upload failed");
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Error uploading image to Cloudinary:", error);
+    return null;
+  }
+};
+
 
 function ChatWithUs() {
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [imageUrl, setImageUrl] = useState();
+  const [isUploading, setIsUploading] = useState(false);
   const scrollViewRef = useRef();
 
   useEffect(() => {
@@ -46,10 +86,8 @@ function ChatWithUs() {
 
   useEffect(() => {
     if (!userId) return;
-
     const messagesCollection = collection(db, "chats", userId, "messages");
     const q = query(messagesCollection, orderBy("createdAt", "asc"));
-
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const messages = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -57,38 +95,81 @@ function ChatWithUs() {
       }));
       setChatHistory(messages);
     });
-
     return () => unsubscribe();
   }, [userId]);
 
   const handleSendMessage = async () => {
-    if (message.trim() === "" || !userId) return;
+    if ((!imageUrl && message.trim() === "") || !userId) return;
 
-    const messageData = {
-      text: message,
-      createdAt: serverTimestamp(),
-      senderId: userId,
-    };
+    setIsUploading(true);
+    let uploadedImageUrl = null;
 
-    await addDoc(collection(db, "chats", userId, "messages"), messageData);
+    try {
+      if (imageUrl) {
+        uploadedImageUrl = await uploadImageToCloudinary(imageUrl);
+        if (!uploadedImageUrl) {
+          alert("Image upload failed. Please try again.");
+          setIsUploading(false);
+          return;
+        }
+      }
 
-    await setDoc(
-      doc(db, "chats", userId),
-      {
-        lastMessage: message,
-        timestamp: serverTimestamp(),
-        userId: userId,
-      },
-      { merge: true }
-    );
+      const messageData = {
+        createdAt: serverTimestamp(),
+        senderId: userId,
+      };
+      if (message.trim() !== "") messageData.text = message;
+      if (uploadedImageUrl) messageData.imageUrl = uploadedImageUrl;
 
-    setMessage("");
+      await addDoc(collection(db, "chats", userId, "messages"), messageData);
+
+      const lastMessageText = message.trim() ? message : "📷 Image";
+      await setDoc(
+        doc(db, "chats", userId),
+        {
+          lastMessage: lastMessageText,
+          timestamp: serverTimestamp(),
+          userId: userId,
+        },
+        { merge: true }
+      );
+
+      setMessage("");
+      setImageUrl(null);
+    } catch (error) {
+      console.error("Error sending message: ", error);
+      alert("Failed to send message.");
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const cameraImageHandler = (uri) => {
+    setImageUrl(uri);
+  };
+
+  let imagePreview = null;
+  if (imageUrl) {
+    imagePreview = (
+      <Image
+        style={styles.image}
+        source={{ uri: imageUrl }}
+        resizeMode="contain"
+      />
+    );
+  }
 
   return (
     <>
       <View style={styles.fabContainer}>
-        <Pressable style={styles.fab} onPress={() => setVisible(true)}>
+        <Pressable
+          style={styles.fab}
+          onPress={() => {
+            setMessage("");
+            setImageUrl(null);
+            setVisible(true);
+          }}
+        >
           <Ionicons
             name="chatbubble-ellipses-sharp"
             size={40}
@@ -101,50 +182,93 @@ function ChatWithUs() {
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            // behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
-            <View style={styles.chatBox}>
-              <View style={styles.chatHeader}>
-                <Text style={styles.headerText}>Chat With Us 💬</Text>
-                <Pressable onPress={() => setVisible(false)}>
-                  <Ionicons name="close" size={22} color="#fff" />
-                </Pressable>
-              </View>
-
-              <ScrollView
-                ref={scrollViewRef}
-                style={styles.chatBody}
-                showsVerticalScrollIndicator={false}
-                onContentSizeChange={() =>
-                  scrollViewRef.current.scrollToEnd({ animated: true })
-                }
+            <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+              <LinearGradient
+                colors={["rgba(7,7,9,1)", "rgba(27,24,113,1)"]}
+                style={styles.chatBox}
               >
-                {chatHistory.map((msg) => (
-                  <View
-                    key={msg.id}
-                    style={[
-                      styles.messageBubble,
-                      msg.senderId === userId ? styles.userMsg : styles.botMsg,
-                    ]}
-                  >
-                    <Text style={styles.messageText}>{msg.text}</Text>
-                  </View>
-                ))}
-              </ScrollView>
+                <View style={styles.chatHeader}>
+                  <Text style={styles.headerText}>Chat With Us 💬</Text>
+                  <Pressable onPress={() => setVisible(false)}>
+                    <Ionicons name="close" size={22} color="#fff" />
+                  </Pressable>
+                </View>
 
-              <View style={styles.chatFooter}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Type a message..."
-                  placeholderTextColor="#ccc"
-                  value={message}
-                  onChangeText={setMessage}
-                />
-                <Pressable onPress={handleSendMessage}>
-                  <Ionicons name="send" size={26} color="#f57b00ff" />
-                </Pressable>
-              </View>
-            </View>
+                <ScrollView
+                  ref={scrollViewRef}
+                  style={styles.chatBody}
+                  showsVerticalScrollIndicator={false}
+                  onContentSizeChange={() =>
+                    scrollViewRef.current.scrollToEnd({ animated: true })
+                  }
+                >
+                  {chatHistory.map((msg) => (
+                    <View
+                      key={msg.id}
+                      style={[
+                        styles.messageBubble,
+                        msg.senderId === userId
+                          ? styles.userMsg
+                          : styles.botMsg,
+                      ]}
+                    >
+                      {msg.imageUrl && (
+                        <Image
+                          source={{ uri: msg.imageUrl }}
+                          style={styles.chatImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                      {msg.text && (
+                        <Text style={styles.messageText}>{msg.text}</Text>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <View style={styles.chatFooter}>
+                  {imageUrl && (
+                    <View style={styles.previewContainer}>
+                      <View style={styles.imagePreview}>{imagePreview}</View>
+                      <Pressable
+                        style={styles.closeButton}
+                        onPress={() => setImageUrl(null)}
+                      >
+                        <Entypo name="cross" size={24} color="#f57b00ff" />
+                      </Pressable>
+                    </View>
+                  )}
+                  <View style={styles.inputContainer}>
+                    <ImagePicker cameraImage={cameraImageHandler} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={
+                        isUploading ? "Sending..." : "Type a message..."
+                      }
+                      value={message}
+                      onChangeText={setMessage}
+                      editable={!isUploading}
+                    />
+                    <Pressable
+                      onPress={handleSendMessage}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <ActivityIndicator
+                          size="small"
+                          color="#888"
+                          style={{ marginRight: 5 }}
+                        />
+                      ) : (
+                        <Ionicons name="send" size={26} color={"#f57b00ff"} />
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              </LinearGradient>
+            </SafeAreaView>
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -156,7 +280,7 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: "absolute",
     right: 20,
-    bottom: 30,
+    bottom: 45,
     zIndex: 999,
   },
   fab: {
@@ -167,17 +291,12 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   chatBox: {
     backgroundColor: "#121212",
-    height: "90%",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    flex: 1,
     paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 20,
   },
   chatHeader: {
     flexDirection: "row",
@@ -186,6 +305,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#333",
     borderBottomWidth: 1,
     paddingBottom: 10,
+    paddingTop: 10,
   },
   headerText: {
     color: "#f57b00ff",
@@ -209,16 +329,21 @@ const styles = StyleSheet.create({
   botMsg: {
     alignSelf: "flex-start",
     backgroundColor: "#2c2c2c",
+    borderWidth: 1,
+    borderColor: "#f57b00ff",
   },
   messageText: {
     color: "#fff",
   },
   chatFooter: {
-    flexDirection: "row",
-    alignItems: "center",
     borderTopColor: "#333",
     borderTopWidth: 1,
     paddingTop: 10,
+    paddingBottom: 10,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -229,6 +354,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
     height: 40,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 4,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#2c2c2c",
+    borderRadius: 4,
+  },
+  previewContainer: {
+    marginBottom: 10,
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(27,24,113,0.5)",
+    borderRadius: 15,
+    padding: 3,
+    zIndex: 1,
+  },
+  chatImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 5,
   },
 });
 
